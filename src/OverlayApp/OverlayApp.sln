@@ -1,0 +1,30 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35931.197
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OverlayApp", "OverlayApp.csproj", "{71B349B8-3A66-4E77-9C10-516BA075FE13}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OverlayApp.SDK", "..\OverlayApp.SDK\OverlayApp.SDK.csproj", "{6E2B8071-11CA-4749-BDEC-ADF04B37D8FA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{71B349B8-3A66-4E77-9C10-516BA075FE13}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{71B349B8-3A66-4E77-9C10-516BA075FE13}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{71B349B8-3A66-4E77-9C10-516BA075FE13}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{71B349B8-3A66-4E77-9C10-516BA075FE13}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6E2B8071-11CA-4749-BDEC-ADF04B37D8FA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6E2B8071-11CA-4749-BDEC-ADF04B37D8FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6E2B8071-11CA-4749-BDEC-ADF04B37D8FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6E2B8071-11CA-4749-BDEC-ADF04B37D8FA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {4996AF23-4CDC-4B95-B6A2-0EF6C553A35D}
+	EndGlobalSection
+EndGlobal

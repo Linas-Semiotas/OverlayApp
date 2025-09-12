@@ -1,0 +1,16 @@
+{
+  "id": "Todo",
+  "displayName": "Todo",
+  "version": "1.0",
+  "isPersistent": false,
+  "position": {
+      "left": 40,
+      "top": 220
+  },
+  "size": {
+      "width": 460,
+      "height": 300,
+      "minWidth": 280,
+      "minHeight": 180
+  }
+}

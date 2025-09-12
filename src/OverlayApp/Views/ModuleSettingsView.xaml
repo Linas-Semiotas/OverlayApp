@@ -1,0 +1,61 @@
+﻿<UserControl x:Class="OverlayApp.Views.ModuleSettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d">
+    <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="45"/>
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0" Margin="20 0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Select module settings:"
+                       VerticalAlignment="Center"
+                       FontSize="16"
+                       Foreground="White"
+                       FontWeight="SemiBold"/>
+            <ComboBox x:Name="ModuleSelectorComboBox"
+                      Grid.Column="1"
+                      Style="{StaticResource CustomComboBox}"
+                      Height="25"
+                      Width="160"
+                      HorizontalAlignment="Right"
+                      SelectionChanged="ModuleSelectorComboBox_SelectionChanged"/>
+        </Grid>
+        <ContentControl x:Name="ModuleSettingsHost"
+                        Grid.Row="1"/>
+        <Border Grid.Row="2"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Top"
+                Background="{DynamicResource B_BackgroundPrimary}"
+                BorderBrush="{DynamicResource B_BackgroundPrimary}"
+                BorderThickness="0,4,0,0">
+            <Grid>
+                <ToggleButton x:Name="ModuleSettingsReset"
+                            Content="Reset to default"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            BorderThickness="0"
+                            FontSize="16"
+                            Width="198"
+                            Height="41"
+                            Style="{StaticResource SelectButtonStyle}"/>
+                <ToggleButton x:Name="ModuleSettingsSave"
+                            Content="Save"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            BorderThickness="0"
+                            FontSize="16"
+                            Width="198"
+                            Height="41"
+                            Style="{StaticResource SelectButtonStyle}"/>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

@@ -1,0 +1,16 @@
+{
+  "id": "Clock",
+  "displayName": "Clock",
+  "version": "1.0",
+  "isPersistent": false,
+  "position": {
+      "left": 40,
+      "top": 40
+  },
+  "size": {
+      "width": 300,
+      "height": 120,
+      "minWidth": 120,
+      "minHeight": 60
+  }
+}

@@ -1,0 +1,52 @@
+﻿<Window x:Class="OverlayApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:OverlayApp"
+        mc:Ignorable="d"
+        Title="MainWindow"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False">
+    <Grid>
+        <ToggleButton x:Name="VisibilityToggleButton" Style="{StaticResource CircleButton}" IsChecked="False" Panel.ZIndex="1000" VerticalAlignment="Top" HorizontalAlignment="Left" Click="ToggleTaskbar_Click">
+            <Image Source="Assets/Icons/visibility.png" Width="36" Height="36" RenderOptions.BitmapScalingMode="HighQuality"/>
+        </ToggleButton>
+        <Border x:Name="Taskbar" Background="{DynamicResource B_BackgroundPrimary}" Height="50" VerticalAlignment="Top" HorizontalAlignment="Stretch" Visibility="Collapsed">
+            <Grid>
+                <StackPanel x:Name="TaskbarTaskButtonsPanel" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
+
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
+                    <ComboBox x:Name="MonitorSelector" Style="{StaticResource CustomComboBox}" SelectionChanged="MonitorSelector_SelectionChanged"/>
+                    <ToggleButton x:Name="EditToggleButton" Style="{StaticResource CircleButton}" IsChecked="False" Click="EditToggleButton_Click">
+                        <Image Source="Assets/Icons/edit.png" Width="32" Height="32" RenderOptions.BitmapScalingMode="HighQuality"/>
+                    </ToggleButton>
+                    <ToggleButton x:Name="ManagerToggleButton" Style="{StaticResource CircleButton}" IsChecked="False" Click="ManagerToggleButton_Click">
+                        <Image Source="Assets/Icons/manager.png" Width="28" Height="28" RenderOptions.BitmapScalingMode="HighQuality"/>
+                    </ToggleButton>
+                    <ToggleButton x:Name="SettingsToggleButton" Style="{StaticResource CircleButton}" IsChecked="False" Click="SettingsToggleButton_Click">
+                        <Image Source="Assets/Icons/settings.png" Width="36" Height="36" RenderOptions.BitmapScalingMode="HighQuality"/>
+                    </ToggleButton>
+                </StackPanel>
+            </Grid>
+        </Border>
+        <Border x:Name="OverlayPanelHost"
+                Width="404"
+                Height="700"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Background="{DynamicResource B_BackgroundPrimary}"
+                Visibility="Collapsed"
+                Margin="0,50,0,0">
+            <ContentControl x:Name="OverlayContentHost"/>
+        </Border>
+        <Grid x:Name="MessageBoxLayer"
+          Background="Transparent"
+          IsHitTestVisible="False">
+        </Grid>
+    </Grid>
+</Window>

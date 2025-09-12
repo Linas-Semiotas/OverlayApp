@@ -1,0 +1,44 @@
+# OverlayApp repo (.NET / WPF)
+
+##############################
+# OS junk
+##############################
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+##############################
+# IDE / Editor caches
+##############################
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+##############################
+# Build outputs (never commit)
+##############################
+**/bin/
+**/obj/
+**/out/
+**/dist/
+**/TestResults/
+
+##############################
+# Packages & logs
+##############################
+*.nupkg
+*.log
+
+##############################
+# Published app
+##############################
+/publish/OverlayApp/
+
+##############################
+# Publish profiles
+##############################
+**/Properties/PublishProfiles/*.pubxml.user

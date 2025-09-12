@@ -1,0 +1,68 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net8.0-windows</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<UseWPF>true</UseWPF>
+		<UseWindowsForms>false</UseWindowsForms>
+		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+		<ApplicationIcon>Assets\Favicon\icon.ico</ApplicationIcon>
+		<ApplicationManifest>app.manifest</ApplicationManifest>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.WindowsDesktop.App.WindowsForms" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Resource Include="Assets\Icons\edit.png" />
+		<Resource Include="Assets\Icons\manager.png" />
+		<Resource Include="Assets\Icons\settings.png" />
+		<Resource Include="Assets\Icons\visibility.png" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Remove="Modules\**\*.*" />
+		<Compile Remove="Modules\**\*.cs" />
+		<Page Remove="Modules\**\*.xaml" />
+	</ItemGroup>
+
+	<!-- Explicitly add WPF Modules and support InitializeComponent -->
+	<ItemGroup>
+		<Page Include="Modules\**\*.xaml" />
+		<Compile Include="Modules\**\*.xaml.cs">
+			<DependentUpon>%(Filename).xaml</DependentUpon>
+		</Compile>
+	</ItemGroup>
+
+	<!-- Copy assets (exclude .xaml and .cs which are compiled) -->
+	<ItemGroup>
+		<Content Include="Assets\Favicon\icon.ico" CopyToOutputDirectory="PreserveNewest" />
+		<Content Include="Resources\Themes\Json\dark_theme.json">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Resources\Themes\Json\future_dusk_theme.json">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Resources\Themes\Json\mocha_mousse_theme.json">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Resources\Themes\Json\light_theme.json">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Data\State\default_state.json">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Modules\**\*.*" Exclude="**\*.xaml;**\*.xaml.cs" CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
+	<ItemGroup>
+	  <None Remove="Resources\Themes\Json\dark_theme.json" />
+	  <None Remove="Data\default_state.json" />
+	</ItemGroup>
+	<ItemGroup>
+	  <ProjectReference Include="..\OverlayApp.SDK\OverlayApp.SDK.csproj" />
+	</ItemGroup>
+
+</Project>

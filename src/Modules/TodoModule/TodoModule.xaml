@@ -1,0 +1,91 @@
+﻿<UserControl x:Class="OverlayApp.Modules.Todo.TodoModule"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+    <Grid Background="Transparent">
+        <Border x:Name="Bg" CornerRadius="4"
+            Background="{DynamicResource B_Surface}"
+            BorderBrush="{DynamicResource B_Border}"
+            BorderThickness="1" Opacity="0.6"/>
+
+        <Grid Margin="8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <!-- top bar: list + collapse -->
+                <RowDefinition Height="Auto"/>
+                <!-- actions (moved below combo) -->
+                <RowDefinition Height="Auto"/>
+                <!-- composer -->
+                <RowDefinition Height="*"/>
+                <!-- items -->
+            </Grid.RowDefinitions>
+
+            <!-- Row 0: ComboBox + Expand/Collapse text button -->
+            <Grid Grid.Row="0" Margin="0,0,0,6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <ComboBox x:Name="ListPicker"
+                  Grid.Column="0"
+                  Style="{DynamicResource CustomComboBox}"
+                  Height="32"
+                  MinWidth="170"
+                    Margin="0,0,6,0"
+                  SelectionChanged="ListPicker_SelectionChanged"/>
+
+                    <ToggleButton x:Name="ToggleViewBtn"
+                      Grid.Column="1"
+                      Content="Collapse"
+                      Height="32" MinWidth="84"
+                      Style="{DynamicResource SelectButtonStyle}"
+                      Click="ToggleViewBtn_Click"/>
+            </Grid>
+
+            <!-- Row 1: actions under the ComboBox -->
+            <StackPanel x:Name="ActionsRow" Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,6">
+                <Button x:Name="NewListBtn"    ToolTip="New list"    Content="New"
+                Style="{DynamicResource HoverButtonStyle}" Height="32" MinWidth="68" Margin="0,0,6,0"
+                Click="NewListBtn_Click"/>
+                <Button x:Name="RenameListBtn" ToolTip="Rename list" Content="Rename"
+                Style="{DynamicResource HoverButtonStyle}" Height="32" MinWidth="84" Margin="0,0,6,0"
+                Click="RenameListBtn_Click"/>
+                <Button x:Name="DeleteListBtn" ToolTip="Delete list" Content="Delete"
+                Style="{DynamicResource HoverButtonStyle}" Height="32" MinWidth="76"
+                Click="DeleteListBtn_Click"/>
+            </StackPanel>
+
+            <!-- Row 2: new item composer -->
+            <Grid x:Name="ComposerRow" Grid.Row="2" Margin="0,0,0,6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBox x:Name="NewItemBox"
+                 Grid.Column="0" Height="32"
+                 VerticalContentAlignment="Center"
+                 Background="{DynamicResource B_BackgroundPrimary}"
+                 Foreground="{DynamicResource B_Text}"
+                 BorderThickness="1"
+                 Margin="0,0,6,0"
+                 KeyDown="NewItemBox_KeyDown"/>
+
+                <Button x:Name="AddItemBtn" Content="Add"
+                Grid.Column="1"
+                Style="{DynamicResource HoverButtonStyle}"
+                Height="32" Width="64"
+                Click="AddItemBtn_Click"/>
+            </Grid>
+
+            <!-- Row 3: items -->
+            <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto">
+                <ScrollViewer.Resources>
+                    <Style TargetType="ScrollBar" BasedOn="{StaticResource SlimVerticalScrollBar}"/>
+                </ScrollViewer.Resources>
+                <StackPanel x:Name="ItemsHost"/>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</UserControl>

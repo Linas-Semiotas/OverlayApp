@@ -1,0 +1,9 @@
+{
+  "timeFormat": "HH:mm:ss",
+  "dateFormat": "yyyy-MM-dd",
+  "showDate": true,
+  "showWeekday": false,
+  "timeScale": 1.4,
+  "padding": 8,
+  "backgroundOpacity": 0.6
+}

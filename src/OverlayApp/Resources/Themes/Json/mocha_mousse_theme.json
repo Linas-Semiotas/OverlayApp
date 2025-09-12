@@ -1,0 +1,12 @@
+{
+    "BackgroundPrimary": "#FFF5F0EB",
+    "BackgroundAlt": "#FFEDE5DF",
+    "Surface": "#FFD6CFC9",
+    "SurfaceSelect": "#FFBFA8A0",
+    "SurfaceHover": "#FFD0C0B8",
+    "Border": "#FFA47864",
+    "SurfaceNeutral": "#FFBFA8A0",
+    "Text": "#FF3E2C23",
+    "Active": "#FFD2691E",
+    "Inactive": "#FF5C4033"
+}

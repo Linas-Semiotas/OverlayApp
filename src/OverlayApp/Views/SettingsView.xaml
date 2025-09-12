@@ -1,0 +1,57 @@
+﻿<UserControl x:Class="OverlayApp.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:OverlayApp.Views"
+             mc:Ignorable="d">
+    <Grid Margin="4,0,0,4" Background="{DynamicResource B_Surface}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <!-- Header -->
+        <Border Background="{DynamicResource B_BackgroundAlt}" Height="50">
+            <TextBlock Text="Settings"
+               FontSize="26"
+               FontWeight="Bold"
+               HorizontalAlignment="Center"
+               VerticalAlignment="Center"
+               Foreground="{DynamicResource B_Text}"/>
+        </Border>
+
+        <Border Grid.Row="1"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Top"
+            Background="{DynamicResource B_BackgroundPrimary}"
+            BorderBrush="{DynamicResource B_BackgroundPrimary}"
+            BorderThickness="0,3,0,3">
+            <Grid>
+                <ToggleButton x:Name="GeneralSettingsButton"
+                    Content="General"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    BorderThickness="0"
+                    FontSize="16"
+                    Width="198"
+                    Height="40"
+                    Style="{StaticResource SelectButtonStyle}"/>
+                <ToggleButton x:Name="ModulesSettingsButton"
+                    Content="Modules"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    BorderThickness="0"
+                    FontSize="16"
+                    Width="198"
+                    Height="40"
+                    Style="{StaticResource SelectButtonStyle}"/>
+            </Grid>
+        </Border>
+        <ContentControl x:Name="SettingsContent"
+                Grid.Row="3"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"/>
+    </Grid>
+</UserControl>

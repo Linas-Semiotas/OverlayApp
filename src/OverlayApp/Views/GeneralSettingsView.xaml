@@ -1,0 +1,52 @@
+﻿<UserControl x:Class="OverlayApp.Views.GeneralSettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:OverlayApp.Views"
+             mc:Ignorable="d">
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled"
+                  HorizontalAlignment="Stretch"
+                  VerticalAlignment="Stretch">
+        <ScrollViewer.Resources>
+            <Style TargetType="ScrollBar" BasedOn="{StaticResource SlimVerticalScrollBar}" />
+        </ScrollViewer.Resources>
+        <Grid Margin="20"
+              HorizontalAlignment="Stretch"
+              VerticalAlignment="Stretch">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <TextBlock Grid.Row="0" Grid.Column="0"
+                       Text="Theme"
+                       FontSize="16"
+                       Foreground="{DynamicResource B_Text}"
+                       VerticalAlignment="Center"/>
+            <ComboBox x:Name="ThemeComboBox"
+                      Style="{StaticResource CustomComboBox}"
+                      Grid.Row="0" Grid.Column="1"
+                      Height="25"
+                      Margin="0 7"
+                      Width="170"
+                      SelectionChanged="ThemeComboBox_SelectionChanged"/>
+            <TextBlock Grid.Row="1" Grid.Column="0"
+                       Text="Reset settings"
+                       FontSize="16"
+                       Foreground="{DynamicResource B_Text}"
+                       VerticalAlignment="Center"/>
+            <Button Grid.Row="1" Grid.Column="1"
+                    x:Name="ResetButton"
+                    Content="Reset to Defaults"
+                    Height="25"
+                    Margin="0 7"
+                    Style="{StaticResource HoverButtonStyle}"
+                    Click="ResetSettings"/>
+        </Grid>
+    </ScrollViewer>
+</UserControl>
