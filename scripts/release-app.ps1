@@ -148,7 +148,6 @@ $zipPath = Join-Path $root ("publish\" + $zipName)
 if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
 Write-Host "Creating $zipName ..."
 Compress-Archive -Path (Join-Path $publishDir '*') -DestinationPath $zipPath -Force
-$relZip = ToRel $zipPath $root
 
 # --- Final confirmation ---
 Write-Host ""
@@ -156,29 +155,13 @@ $mode = Read-Host "Continue: [F]ull (commit/tag/push/release), [P]ublish only (n
 if ($mode -match '^[Pp]$') { Write-Host "Publish-only complete. Zip at: $zipPath"; exit 0 }
 if ($mode -match '^[Aa]$') { Write-Host "Aborted."; exit 0 }
 
-# --- Allow-list check: only our own changes may be dirty now ---
-$dirtyPaths = Get-DirtyPaths "scripts/"
-# allow these:
-$allow = @(
-  $relCsproj,                              # the bumped csproj
-  $relZip,                                 # the new zip
-  "publish/overlayapp/",                   # everything under publish/OverlayApp/**
-  "publish/overlayapp\"                    # (backslash variant, just in case)
-) | ForEach-Object { $_.ToLowerInvariant() }
-
-$unexpected = @()
-foreach ($p in $dirtyPaths) {
-  $ok = $false
-  foreach ($a in $allow) {
-    if ($a.EndsWith("/")) {
-      if ($p.StartsWith($a)) { $ok = $true; break }
-    } elseif ($p -eq $a) {
-      $ok = $true; break
-    }
-  }
-  if (-not $ok) { $unexpected += $p }
+# --- Allow only expected changes: csproj bump + publish/OverlayApp/**
+$dirtyPaths = Get-DirtyPaths "scripts/"  # relative, lowercase
+$unexpected = $dirtyPaths | Where-Object {
+  $_ -ne (ToRel $appCsproj $root) -and -not $_.StartsWith('publish/overlayapp/')
 }
 
+# Avoid non-FF pushes
 if ($behind -ne '0') {
   Write-Host "Blocked: local is behind origin/$branch ($behind). Run: git pull --ff-only" -ForegroundColor Red
   exit 1

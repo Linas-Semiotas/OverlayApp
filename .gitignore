@@ -37,6 +37,8 @@ Desktop.ini
 # Published app
 ##############################
 /publish/OverlayApp/
+/publish/*.zip
+/publish/*.7z
 
 ##############################
 # Publish profiles
