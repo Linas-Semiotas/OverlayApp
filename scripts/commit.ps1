@@ -102,3 +102,4 @@ if ($body) {
 git push -u origin $branch
 Write-Host "`nDone." -ForegroundColor Green
 Pause-AnyKey
+exit   #
