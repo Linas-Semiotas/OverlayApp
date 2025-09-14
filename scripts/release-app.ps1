@@ -1,164 +1,206 @@
-param(
-  [string]$ProjectPath = "src/OverlayApp/OverlayApp.csproj",
-  [string]$SdkPath      = "src/OverlayApp.SDK",
-  [string]$PublishDir   = "publish/OverlayApp",
-  [string]$DistDir      = "dist/app",
-  [string]$PubXml       = ""   # e.g. "src/OverlayApp/Properties/PublishProfiles/FolderProfile.pubxml"
-)
+$ErrorActionPreference = 'Stop'
 
-$ErrorActionPreference = "Stop"
-
-function Assert-Tool($name) {
-  if (-not (Get-Command $name -ErrorAction SilentlyContinue)) {
-    throw "Required tool not found: $name"
-  }
+function Require-Tool([string]$name) {
+    if (-not (Get-Command $name -ErrorAction SilentlyContinue)) {
+        Write-Host "$name not found in PATH. Please install it." -ForegroundColor Red
+        exit 1
+    }
 }
 
-function Repo-Root {
-  $p = Resolve-Path .
-  while ($p -and -not (Test-Path (Join-Path $p ".git"))) {
-    $p = Split-Path $p
-  }
-  if (-not $p) { throw "Not inside a Git repo." }
-  Set-Location $p
+function Coalesce([string]$a, [string]$b) {
+    if ([string]::IsNullOrWhiteSpace($a)) { $b } else { $a }
 }
 
-function Get-CurrentVersion([string]$csproj) {
-  if (-not (Test-Path $csproj)) { throw "csproj not found: $csproj" }
-  [xml]$xml = Get-Content $csproj
-  $v = $xml.Project.PropertyGroup.Version
-  if (-not $v) { throw "No <Version> in $csproj" }
-  return $v.Trim()
+# Return $true if there are local changes OUTSIDE the scripts/ folder
+function IsDirtyExcludingScripts {
+    $changes = & git status --porcelain
+    if (-not $changes) { return $false }
+    $lines = $changes -split "`r?`n" | Where-Object { $_ -ne "" }
+    foreach ($l in $lines) {
+        # format: "XY path"
+        $path = $l.Substring([Math]::Min(3, $l.Length)).Trim()
+        if ($path -and -not ($path -like "scripts/*" -or $path -like "scripts\*")) {
+            return $true
+        }
+    }
+    return $false
 }
 
-function Set-Version([string]$csproj, [string]$newVersion) {
-  [xml]$xml = Get-Content $csproj
-  $xml.Project.PropertyGroup.Version = $newVersion
-  $xml.Save((Resolve-Path $csproj))
+# --- Tool checks ---
+Require-Tool git
+Require-Tool dotnet
+$GhAvailable = $null -ne (Get-Command gh -ErrorAction SilentlyContinue)
+
+# --- Repo root ---
+try { $root = (git rev-parse --show-toplevel 2>$null).Trim() } catch { $root = $null }
+if (-not $root) { Write-Host "Not inside a git repo." -ForegroundColor Red; exit 1 }
+Set-Location $root
+
+# --- Branch info ---
+try { $branch = (git rev-parse --abbrev-ref HEAD).Trim() } catch { $branch = "unknown" }
+
+# --- Remote state (preview only for now) ---
+& git fetch --prune --tags *> $null
+$localSha  = (git rev-parse HEAD).Trim()
+$remoteSha = (git rev-parse "origin/$branch" 2>$null).Trim()
+$counts = (git rev-list --left-right --count HEAD...origin/$branch 2>$null)
+$ahead = "0"; $behind = "0"
+if ($counts) { $parts = $counts -split "\s+"; if ($parts.Count -ge 2) { $ahead = $parts[0]; $behind = $parts[1] } }
+
+# --- Find app csproj ---
+$appCsproj = Join-Path $root 'src\OverlayApp\OverlayApp.csproj'
+if (-not (Test-Path $appCsproj)) {
+    $candidate = Get-ChildItem -Recurse -Filter 'OverlayApp.csproj' | Select-Object -First 1
+    if ($null -eq $candidate) { Write-Host "OverlayApp.csproj not found." -ForegroundColor Red; exit 1 }
+    $appCsproj = $candidate.FullName
 }
 
-function SemVer-Bump([string]$v, [string]$kind) {
-  if ($v -notmatch '^(?<maj>\d+)\.(?<min>\d+)\.(?<pat>\d+)(-.+)?$') { throw "Invalid SemVer: $v" }
-  $maj = [int]$Matches.maj; $min = [int]$Matches.min; $pat = [int]$Matches.pat
-  switch ($kind) {
-    "major" { ($maj+1).ToString() + ".0.0" }
-    "minor" { "$maj." + ($min+1) + ".0" }
-    "patch" { "$maj.$min." + ($pat+1) }
-    default { $v }
-  }
+# --- Read current version from csproj ---
+$csprojText = Get-Content $appCsproj -Raw
+$verRe     = '<Version>\s*v?([0-9]+(?:\.[0-9]+){0,2})\s*</Version>'
+$verMatch  = [regex]::Match($csprojText, $verRe, 'IgnoreCase')
+$currentVer = $(if ($verMatch.Success) { $verMatch.Groups[1].Value } else { '0.1.0' })
+
+# --- Last local tag ---
+try { $lastTag = (git describe --tags --abbrev=0 2>$null).Trim() } catch { $lastTag = $null }
+$lastTagDisplay = Coalesce $lastTag '<none>'
+
+# --- Latest GitHub Release tag (optional) ---
+$latestReleaseTag = '<n/a>'
+if ($GhAvailable) {
+    $rl = & gh release list --limit 1 2>$null
+    if ($LASTEXITCODE -eq 0 -and $rl) { $latestReleaseTag = ($rl -split '\s+')[0] } else { $latestReleaseTag = '<none>' }
 }
 
-function Last-Tag {
-  $t = git tag --list "v*" --sort=-v:refname | Select-Object -First 1
-  return $t
-}
-
-function Has-Changes-Since([string]$tag, [string[]]$paths) {
-  if ([string]::IsNullOrWhiteSpace($tag)) { return $true } # first release
-  $args = @("diff","--quiet",$tag,"--")
-  $args += $paths
-  $psi = New-Object System.Diagnostics.ProcessStartInfo
-  $psi.FileName = "git"
-  $psi.Arguments = $args -join " "
-  $psi.RedirectStandardError = $true
-  $psi.RedirectStandardOutput = $true
-  $psi.UseShellExecute = $false
-  $p = [System.Diagnostics.Process]::Start($psi)
-  $p.WaitForExit()
-  # exit code 0 = no changes, 1 = changes
-  return ($p.ExitCode -ne 0)
-}
-
-# --- Start ---
-Assert-Tool git
-Assert-Tool dotnet
-Repo-Root
-
-# Clean tree
-if ((git status --porcelain) -ne "") {
-  throw "Working tree not clean. Commit or stash first."
-}
-
-git fetch --tags | Out-Null
-
-$lastTag = Last-Tag
-Write-Host "Last tag:" ($lastTag ?? "<none>")
-
-$changed = Has-Changes-Since $lastTag @("src/OverlayApp","src/OverlayApp.SDK")
-if (-not $changed) {
-  Write-Host "No changes under src/OverlayApp or src/OverlayApp.SDK since $lastTag. Nothing to release."
-  exit 0
-}
-
-$current = Get-CurrentVersion $ProjectPath
-Write-Host "Current version in csproj:" $current
-
-# Bump menu
+# --- Preview header ---
+Write-Host "Branch:               $branch"
+Write-Host "Local vs origin:      ahead=$ahead  behind=$behind"
+Write-Host "Working tree dirty*:  $(if (IsDirtyExcludingScripts) {'YES'} else {'no'})  (*ignores scripts/)"
+Write-Host "Current csproj ver:   $currentVer"
+Write-Host "Last local git tag:   $lastTagDisplay"
+Write-Host "Latest GH release:    $latestReleaseTag"
 Write-Host ""
-Write-Host "Select version bump:"
-Write-Host "  1) major   (X+1.0.0)"
-Write-Host "  2) minor   (Y+1)"
-Write-Host "  3) patch   (Z+1)"
-Write-Host "  4) keep    (use $current)"
-$choice = Read-Host "Enter 1/2/3/4"
-$bump = switch ($choice) {
-  "1" { "major" }
-  "2" { "minor" }
-  "3" { "patch" }
-  default { "keep" }
+
+# Heads-up on mismatches (preview only)
+if ($lastTag -and $lastTag -ne "v$currentVer") {
+    Write-Host "NOTE: csproj ($currentVer) != last tag ($lastTag)." -ForegroundColor Yellow
 }
-$next = if ($bump -eq "keep") { $current } else { SemVer-Bump $current $bump }
 
-# Commit message + release notes
-$defaultCommit = "chore(release): v$next"
-$commitMsg = Read-Host "Commit message [`$default: $defaultCommit`]"
-if ([string]::IsNullOrWhiteSpace($commitMsg)) { $commitMsg = $defaultCommit }
-$notes = Read-Host "Release notes (optional, one-liner or leave blank)"
+# --- Choose bump ---
+Write-Host "Select version action:"
+Write-Host "0. keep (no bump) -> $currentVer"
+$parts = @(); try { $parts = $currentVer.Split('.') } catch { $parts = @('0','1','0') }
+while ($parts.Count -lt 3) { $parts += '0' }
+[int]$maj = $parts[0]; [int]$min = $parts[1]; [int]$pat = $parts[2]
+Write-Host "1. major -> $($maj+1).0.0"
+Write-Host "2. minor -> $maj.$($min+1).0"
+Write-Host "3. patch -> $maj.$min.$($pat+1)"
+$choice = Read-Host "Choice (0/1/2/3)"
+if ($choice -notin @('0','1','2','3')) { Write-Host "Aborted."; exit 0 }
 
+$updateCsproj = $true
+switch ($choice) {
+    '0' { $newVer = $currentVer; $updateCsproj = $false }
+    '1' { $newVer = "$($maj+1).0.0" }
+    '2' { $newVer = "$maj.$($min+1).0" }
+    '3' { $newVer = "$maj.$min.$($pat+1)" }
+}
+
+# --- Plan summary ---
 Write-Host ""
-Write-Host "Summary:"
-Write-Host "  Last tag:      " ($lastTag ?? "<none>")
-Write-Host "  Version:       " $current "->" $next
-Write-Host "  Commit message:" $commitMsg
-Write-Host "  Publish dir:   " $PublishDir
-Write-Host "  Zip out:       " $DistDir\OverlayApp-$next.zip
-$confirm = Read-Host "Proceed to build and release? (Y/N)"
-if ($confirm -notin @("Y","y")) { Write-Host "Aborted."; exit 0 }
+Write-Host "Plan:"
+if ($updateCsproj) { Write-Host "  - Bump csproj: $currentVer -> $newVer" } else { Write-Host "  - Keep version: $currentVer (rebuild/release)" }
+Write-Host "  - dotnet publish  -> publish\OverlayApp"
+Write-Host "  - Zip artifact    -> publish\OverlayApp-v$newVer.zip"
+Write-Host "  - Commit/tag/push -> only at the very end (after another confirm)"
+Write-Host ""
 
-# Build (publish)
-if (Test-Path $PublishDir) { Remove-Item -Recurse -Force $PublishDir }
-New-Item -ItemType Directory -Force -Path $PublishDir | Out-Null
+# First confirm (no git writes yet)
+$go = Read-Host "Proceed with publish/zip? (Y/N)"
+if ($go -notmatch '^(y|Y)$') { Write-Host "Aborted."; exit 0 }
 
-if ($PubXml) {
-  dotnet publish $ProjectPath -c Release /p:PublishProfile="$PubXml"
-} else {
-  dotnet publish $ProjectPath -c Release -o $PublishDir
+# --- Update csproj if bumping ---
+if ($updateCsproj) {
+    if ($verMatch.Success) {
+        $csprojText = [regex]::Replace($csprojText, $verRe, "<Version>$newVer</Version>", 'IgnoreCase')
+    } else {
+        $csprojText = $csprojText -replace '</PropertyGroup>', "  <Version>$newVer</Version>`r`n</PropertyGroup>"
+    }
+    Set-Content -Path $appCsproj -Value $csprojText -Encoding UTF8
+    Write-Host "Updated $appCsproj to $newVer"
 }
 
-# Zip
-New-Item -ItemType Directory -Force -Path $DistDir | Out-Null
-$zipPath = Join-Path $DistDir ("OverlayApp-" + $next + ".zip")
+# --- Publish ---
+$publishDir = Join-Path $root 'publish\OverlayApp'
+if (-not (Test-Path $publishDir)) { New-Item -ItemType Directory -Path $publishDir | Out-Null }
+Write-Host "Publishing to $publishDir ..."
+dotnet publish $appCsproj -c Release -o $publishDir
+
+# --- Zip output ---
+$zipName = "OverlayApp-v$newVer.zip"
+$zipPath = Join-Path $root ("publish\" + $zipName)
 if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
-Compress-Archive -Path (Join-Path $PublishDir "*") -DestinationPath $zipPath
+Write-Host "Creating $zipName ..."
+Compress-Archive -Path (Join-Path $publishDir '*') -DestinationPath $zipPath -Force
 
-# Version bump (write, commit, tag, push)
-if ($next -ne $current) {
-  Set-Version $ProjectPath $next
-  git add $ProjectPath
+# --- Final checks & confirmation BEFORE any git writes ---
+$dirty = IsDirtyExcludingScripts
+$finalWarns = @()
+if ($dirty) { $finalWarns += "Working tree has changes outside scripts/." }
+if ($behind -ne '0') { $finalWarns += "Your branch is BEHIND origin/$branch ($behind). Run: git pull --ff-only" }
+
+if ($finalWarns.Count -gt 0) {
+    Write-Host ""
+    Write-Host "Pre-flight warnings:" -ForegroundColor Yellow
+    $finalWarns | ForEach-Object { Write-Host "  • $_" -ForegroundColor Yellow }
+    Write-Host ""
 }
-git commit -m "$commitMsg"
-git tag "v$next"
-git push
-git push origin "v$next"
 
-# Release (if gh exists)
-if (Get-Command gh -ErrorAction SilentlyContinue) {
-  $args = @("release","create","v$next",$zipPath,"-t","OverlayApp $next")
-  if (-not [string]::IsNullOrWhiteSpace($notes)) {
-    $args += @("-n",$notes)
-  }
-  & gh @args
-  Write-Host "Release created with asset: $zipPath"
+$mode = Read-Host "Continue: [F]ull (commit/tag/push/release), [P]ublish only (no git), [A]bort?"
+switch -regex ($mode) {
+    '^[Pp]$' { Write-Host "Publish-only complete. Zip at: $zipPath"; exit 0 }
+    '^[Aa]$' { Write-Host "Aborted."; exit 0 }
+    default  { } # Full path continues
+}
+
+# Block if behind remote (to avoid non-FF push)
+if ($behind -ne '0') {
+    Write-Host "Blocked: local is behind origin/$branch. Do: git pull --ff-only" -ForegroundColor Red
+    exit 1
+}
+
+# Block if dirty outside scripts/
+if ($dirty) {
+    Write-Host "Blocked: uncommitted changes outside scripts/." -ForegroundColor Red
+    Write-Host "Commit/stash them or move changes under scripts/, then re-run." -ForegroundColor Red
+    exit 1
+}
+
+# --- Git stage/commit/push (only if version bumped) ---
+if ($updateCsproj) {
+    git add "$appCsproj"
+    git commit -m "build(app): bump version to v$newVer"
+    git push -u origin $branch
+}
+
+# --- Tag handling ---
+$tagName = "v$newVer"
+$tagExistsLocal = (git tag -l $tagName)
+if (-not $tagExistsLocal) { git tag $tagName }
+try { git push origin $tagName } catch { }
+
+# --- GitHub release handling ---
+if ($GhAvailable) {
+    & gh release view $tagName 1>$null 2>$null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "Release $tagName exists; updating asset..."
+        gh release upload $tagName "$zipPath" --clobber
+    } else {
+        Write-Host "Creating release $tagName ..."
+        gh release create $tagName "$zipPath" --title "OverlayApp $tagName" --notes "Release $tagName"
+    }
 } else {
-  Write-Host "gh not found; upload $zipPath manually to a new GitHub release 'v$next'."
+    Write-Host "gh not found; upload $zipPath manually on the Releases page."
 }
+
+Write-Host "Done."

@@ -1,10 +1,20 @@
-# scripts/commit.ps1
 $ErrorActionPreference = "Stop"
 
 function Exit-WithMessage($msg, $color = "Red", [int]$code = 1) {
   Write-Host $msg -ForegroundColor $color
-  Read-Host "Press Enter to close"
+  Pause-AnyKey
   exit $code
+}
+
+function Pause-AnyKey {
+  try {
+    Write-Host ""
+    Write-Host "Press any key to close ..."
+    $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+  } catch {
+    # Fallback if RawUI isn't available (rare)
+    cmd /c pause >$null
+  }
 }
 
 # 1) Check git
@@ -23,16 +33,16 @@ $branch = (git rev-parse --abbrev-ref HEAD).Trim()
 
 # 3) Pick TYPE
 $types = @(
-  @{ Key = 'feat';     Desc = 'New end-user feature (UI/module/API)'},
-  @{ Key = 'fix';      Desc = 'Bug fix (no breaking change)'},
-  @{ Key = 'docs';     Desc = 'Docs only (README/guides)'},
-  @{ Key = 'style';    Desc = 'Formatting/linting; no logic change'},
-  @{ Key = 'refactor'; Desc = 'Restructure; behavior unchanged'},
-  @{ Key = 'perf';     Desc = 'Performance improvement'},
-  @{ Key = 'test';     Desc = 'Add/update tests only'},
-  @{ Key = 'build';    Desc = 'Build system/deps (csproj, NuGet)'},
-  @{ Key = 'ci';       Desc = 'CI/workflows (GitHub Actions)'},
-  @{ Key = 'chore';    Desc = 'Maintenance: bumps, cleanup, tooling'},
+  @{ Key = 'feat';     Desc = 'New end-user feature (UI/module/API)'}
+  @{ Key = 'fix';      Desc = 'Bug fix (no breaking change)'}
+  @{ Key = 'docs';     Desc = 'Docs only (README/guides)'}
+  @{ Key = 'style';    Desc = 'Formatting/linting; no logic change'}
+  @{ Key = 'refactor'; Desc = 'Restructure; behavior unchanged'}
+  @{ Key = 'perf';     Desc = 'Performance improvement'}
+  @{ Key = 'test';     Desc = 'Add/update tests only'}
+  @{ Key = 'build';    Desc = 'Build system/deps (csproj, NuGet)'}
+  @{ Key = 'ci';       Desc = 'CI/workflows (GitHub Actions)'}
+  @{ Key = 'chore';    Desc = 'Maintenance: bumps, cleanup, tooling'}
   @{ Key = 'revert';   Desc = 'Revert a previous commit'}
 )
 Write-Host ""
@@ -78,7 +88,7 @@ Write-Host $preview -ForegroundColor Yellow
 if ($body) { Write-Host $body }
 
 $ok = Read-Host "Proceed? Y/N"
-if ($ok -notin @('y','Y')) { Write-Host "Aborted."; exit 0 }
+if ($ok -notin @('y','Y')) { Write-Host "Aborted."; Pause-AnyKey; exit 0 }
 
 # 6) Add/commit/push
 git add -A
@@ -91,4 +101,4 @@ if ($body) {
 
 git push -u origin $branch
 Write-Host "`nDone." -ForegroundColor Green
-Read-Host "Press Enter to close"
+Pause-AnyKey
